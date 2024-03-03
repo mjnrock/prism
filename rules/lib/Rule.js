@@ -7,6 +7,13 @@ export const EnumRuleType = {
 };
 
 const executeRoute = async (route, { context, router } = {}) => {
+	/* Account for stringified functions */
+	if(typeof route === "string") {
+		try {
+			route = new Function(`return ${ route };`)();
+		} catch(error) { }
+	}
+
 	if(typeof route === "function") {
 		return await route(context);
 	} else if(typeof route === "string" && router && router[ route ]) {
@@ -37,9 +44,19 @@ export const ruleHandlers = {
 	},
 };
 
-export const ruleEngine = async (ruleSet, context = {}, router = {}) => {
+export const ruleEngine = async (ruleSet, { context = {}, router = {} } = {}) => {
 	let useObjectForResult = ruleSet.some(rule => typeof rule === "object" && rule.name);
 	let results = useObjectForResult ? {} : [];
+
+	/* Intermix rule-specific context and router from ruleSet */
+	for(const rule of ruleSet) {
+		if(rule?.context) {
+			context = { ...context, ...rule.context };
+		}
+		if(rule?.router) {
+			router = { ...router, ...rule.router };
+		}
+	}
 
 	for(let i = 0; i < ruleSet.length; i++) {
 		let rule = ruleSet[ i ];
@@ -69,6 +86,41 @@ export const ruleEngine = async (ruleSet, context = {}, router = {}) => {
 	return results;
 };
 
+export const toJson = (rule, spacing = 0) => {
+	return JSON.stringify(rule, (key, value) => {
+		if(typeof value === "function") {
+			const functionName = Object.keys(Proposition).find(key => Proposition[ key ] === value);
+			if(functionName) {
+				return functionName;
+			}
+
+			return value.toString();
+		}
+		return value;
+	}, spacing);
+};
+export const fromJson = (json) => {
+	if(typeof json === "object") {
+		// json is a file import, recreate any nested stringified functions
+		return JSON.parse(JSON.stringify(json), (key, value) => {
+			if(typeof value === "string" && (value.startsWith("function") || value.startsWith("(") || value.startsWith("async"))) {
+				return new Function(`return ${ value }`)();
+			} else {
+				return value;
+			}
+		});
+	}
+
+	// json is a toJson result, undo
+	return JSON.parse(json, (key, value) => {
+		if(typeof value === "string" && (value.startsWith("function") || value.startsWith("(") || value.startsWith("async"))) {
+			return new Function(`return ${ value }`)();
+		} else {
+			return value;
+		}
+	});
+};
+
 
 /**
  * Rule Syntax:
@@ -90,6 +142,8 @@ export const Rule = {
 	EnumRuleType,
 	executeRule,
 	ruleEngine,
+	toJson,
+	fromJson,
 };
 
 export default Rule;
@@ -150,9 +204,12 @@ export default Rule;
 // 		],
 // 		route: () => console.log("WHILE action executed"),
 // 	},
-// ], {}, {
-// 	logTrue: () => console.log("Condition evaluated to true"),
-// 	logFalse: () => console.log("Condition evaluated to false"),
+// ], {
+// 	context: {},
+// 	router: {
+// 		logTrue: () => console.log("Condition evaluated to true"),
+// 		logFalse: () => console.log("Condition evaluated to false"),
+// 	},
 // })
 // 	.then((results) => console.log("Rule engine execution completed", results))
 // 	.catch(error => console.error("Rule engine error:", error));

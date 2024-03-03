@@ -45,8 +45,14 @@ export const evaluate = async (circuit, context = {}) => {
 	if(typeof circuit === "function") {
 		return await circuit(context);
 	} else if(Array.isArray(circuit)) {
-		const operator = circuit[ 0 ];
+		let operator = circuit[ 0 ];
 		const operands = circuit.slice(1);
+
+		if(typeof operator === "string") {
+			operator = Proposition[ operator ];
+		}
+
+
 		/* Recurse the circuit and evaluate all operands */
 		const evaluatedOperands = await Promise.all(operands.map(async operand => await evaluate(operand, context)));
 
@@ -70,8 +76,15 @@ export const toJson = (circuit) => {
 	if(typeof circuit === "function") {
 		return circuit.toString();
 	} else if(Array.isArray(circuit)) {
-		const operator = circuit[ 0 ];
+		let operator = circuit[ 0 ];
 		const operands = circuit.slice(1);
+
+		if(typeof operator === "function") {
+			const functionName = Object.keys(Proposition).find(key => Proposition[ key ] === operator);
+			if(functionName) {
+				operator = functionName;
+			}
+		}
 
 		return [ operator.name, ...operands.map(operand => toJson(operand)) ];
 	} else {
