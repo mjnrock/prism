@@ -10,7 +10,7 @@ const router = express.Router();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function loadRuleJson(uuid) {
-	const rulePath = path.join(__dirname, `../data/rules/${ uuid }.rule.json`);
+	const rulePath = path.join(__dirname, `../data/rules/${ uuid }.rule`);
 	try {
 		const fileContents = await fs.readFile(rulePath, "utf-8");
 		return JSON.parse(fileContents);
@@ -20,7 +20,7 @@ async function loadRuleJson(uuid) {
 	}
 };
 async function loadPropositionJson(uuid) {
-	const propositionPath = path.join(__dirname, `../data/propositions/${ uuid }.proposition.json`);
+	const propositionPath = path.join(__dirname, `../data/props/${ uuid }.prop`);
 	try {
 		const fileContents = await fs.readFile(propositionPath, "utf-8");
 		return JSON.parse(fileContents);
