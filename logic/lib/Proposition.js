@@ -1,9 +1,9 @@
-export const toBooleanFunc = (arg) => async (...args) => {
+export const toBooleanFunc = (arg, context = {}) => async (...args) => {
 	if(typeof arg !== "function" && typeof arg !== "boolean") {
 		throw new Error("All arguments must be functions that return boolean values or raw booleans.");
 	}
 	if(typeof arg === "function") {
-		const result = await arg(...args);
+		const result = await arg(context, ...args); // Pass context as the first argument
 		if(typeof result !== "boolean") {
 			throw new Error("Function did not return a boolean value.");
 		}
@@ -13,51 +13,72 @@ export const toBooleanFunc = (arg) => async (...args) => {
 	}
 };
 
-export const OR = (...args) => async () => {
-	const resolvedArgs = await Promise.all(args.map(arg => toBooleanFunc(arg)()));
+// Update logical operation functions to include context
+export const OR = (context, ...args) => async () => {
+	const resolvedArgs = await Promise.all(args.map(arg => toBooleanFunc(arg, context)()));
 	return resolvedArgs.some(arg => arg);
 };
 
-export const AND = (...args) => async () => {
-	const resolvedArgs = await Promise.all(args.map(arg => toBooleanFunc(arg)()));
+export const AND = (context, ...args) => async () => {
+	const resolvedArgs = await Promise.all(args.map(arg => toBooleanFunc(arg, context)()));
 	return resolvedArgs.every(arg => arg);
 };
 
-export const NOT = (arg) => async () => !await toBooleanFunc(arg)();
+export const NOT = (context, arg) => async () => !await toBooleanFunc(arg, context)();
 
-export const NAND = (...args) => async () => !await AND(...args)();
+export const NAND = (context, ...args) => async () => !await AND(context, ...args)();
 
-export const NOR = (...args) => async () => !await OR(...args)();
+export const NOR = (context, ...args) => async () => !await OR(context, ...args)();
 
-export const XOR = (...args) => async () => {
-	const resolvedArgs = await Promise.all(args.map(arg => toBooleanFunc(arg)()));
+export const XOR = (context, ...args) => async () => {
+	const resolvedArgs = await Promise.all(args.map(arg => toBooleanFunc(arg, context)()));
 	return resolvedArgs.filter(arg => arg).length % 2 === 1;
 };
 
-export const XNOR = (...args) => async () => !await XOR(...args)();
+export const XNOR = (context, ...args) => async () => !await XOR(context, ...args)();
 
-export const IF = (a, b) => async () => await OR(NOT(a), b)();
+export const IF = (context, a, b) => async () => await OR(context, NOT(context, a), b)();
 
-export const IFF = (a, b) => async () => await NOT(XOR(a, b))();
+export const IFF = (context, a, b) => async () => await NOT(context, XOR(context, a, b))();
 
-/**
- * Evaluates a logic circuit. The circuit can be a function that returns a boolean value, an array that represents a logic circuit, or a raw boolean value.
- * Use if you need to evaluate multiple circuits at once, or if you need to process the array syntax.
- */
-export const evaluate = async (circuit) => {
+// Adjust evaluate to support context
+export const evaluate = async (circuit, context = {}) => {
 	if(typeof circuit === "function") {
-		return await circuit();
+		return await circuit(context); // Pass context to functions
+	} else if(Array.isArray(circuit)) {
+		const operator = circuit[ 0 ];
+		const operands = circuit.slice(1);
+		const evaluatedOperands = await Promise.all(operands.map(async operand => await evaluate(operand, context)));
+		if(typeof operator === "function") {
+			return evaluate(await operator(context, ...evaluatedOperands), context); // Pass context to functions
+		} else {
+			throw new Error("Invalid operator in logic circuit.");
+		}
+	} else {
+		return circuit;
+	}
+};
+
+export const toJson = (circuit) => {
+	if(typeof circuit === "function") {
+		return circuit.toString();
 	} else if(Array.isArray(circuit)) {
 		const operator = circuit[ 0 ];
 		const operands = circuit.slice(1);
 
-		const evaluatedOperands = await Promise.all(operands.map(async operand => await evaluate(operand)));
+		return [ operator.name, ...operands.map(operand => toJson(operand)) ];
+	} else {
+		return circuit;
+	}
+};
+export const fromJson = (circuit) => {
+	if(typeof circuit === "string") {
+		return new Function(`return ${ circuit };`)();
+	} else if(Array.isArray(circuit)) {
+		const operator = circuit[ 0 ];
+		const operands = circuit.slice(1);
 
-		if(typeof operator === "function") {
-			return evaluate(await operator(...evaluatedOperands));
-		} else {
-			throw new Error("Invalid operator in logic circuit.");
-		}
+		return [ Proposition[ operator ], ...operands.map(operand => fromJson(operand)) ];
 	} else {
 		return circuit;
 	}
@@ -74,6 +95,8 @@ export const Proposition = {
 	IF,
 	IFF,
 	evaluate,
+	toJson,
+	fromJson,
 };
 
 export default Proposition;
@@ -110,3 +133,23 @@ export default Proposition;
 // evaluate(logicCircuit).then(result => console.log(222, result));
 // evaluate(logicCircuit2).then(result => console.log(333, result));
 // evaluate([ OR, logicCircuit, logicCircuit2 ]).then(result => console.log(444, result));
+
+// const A = async () => fetch("https://jsonplaceholder.typicode.com/todos/1").then(response => response.ok);
+// const B = async () => fetch("https://example.com").then(response => response.ok);
+// const C = async () => fetch("https://google.com").then(response => response.ok);
+
+// const circuit = OR(
+// 	AND(A, B),
+// 	NOT(C)
+// );
+
+// const evaluateCircuit = async () => {
+// 	try {
+// 		const result = await evaluate(circuit);
+// 		console.log("Result:", result);
+// 	} catch(error) {
+// 		console.error("Error evaluating circuit:", error.message);
+// 	}
+// };
+
+// evaluateCircuit();
