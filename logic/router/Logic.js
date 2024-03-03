@@ -2,25 +2,26 @@ import express from "express";
 import Proposition from "../lib/Proposition.js";
 
 const router = express.Router();
-const { OR, AND, NOT, XOR, evaluate, toJson, fromJson } = Proposition;
 
-const registry = {
-	"22791c63-3824-4a9e-9561-5aabb138a7bf": [
+//TODO: Replace this with a database
+const { OR, AND, NOT, XOR, evaluate } = Proposition;
+const circuitRegistry = {
+	"22791c63": [
 		AND,
 		[ AND, true, [ NOT, () => fetch("http://localhost:3200").then(response => response.ok) ] ],
 		[ NOT, () => Math.random() > 0.5 ],
 	],
-	"3ac6db27-422a-4243-92d8-abdade872edd": [
+	"3ac6db27": [
 		AND,
 		[ OR, true, false ],
 		[ NOT, false ],
 	],
-	"8e7c4722-ca99-45a8-a79c-810e86fa8cf7": [
+	"8e7c4722": [
 		XOR,
 		[ NOT, false ],
 		true,
 	],
-	"e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e": [
+	"e3e3e3e3": [
 		AND,
 		[ OR, false, (ctx) => {
 			console.log("This function should log the context object:", ctx);
@@ -37,7 +38,7 @@ const registry = {
 
 router.use("/:uuid", async (req, res) => {
 	const { uuid } = req.params;
-	const circuit = registry[ uuid ];
+	const circuit = circuitRegistry[ uuid ];
 	const context = req.body;
 
 	if(circuit) {
