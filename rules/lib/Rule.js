@@ -99,60 +99,60 @@ export default Rule;
 // ============================================
 // 			Example Usage
 // ============================================
-ruleEngine([
-	/* Shorthand to support (direct Propositions for) cases where the final result of `ruleEngine` is used for further processing, instead of individual routing */
-	[
-		OR,
-		[ AND, true, true ],
-		false,
-	],
-	/* Normal syntax */
-	{
-		// type: EnumRuleType.PROPOSITION,	// This is optional, but useful for debugging
-		// name: "Test Rule 1",	// This is optional, but useful for debugging
-		logic: [
-			OR,
-			[ AND, true, [ NOT, false ] ],
-			false,
-		],
-		route: {
-			true: (...args) => console.log("123", args),
-			false: (...args) => console.log("321", args),
-		},
-	},
-	{
-		logic: [
-			() => Math.random() < 0.5,
-		],
-		route: {
-			true: (...args) => console.log("556", args),
-			false: (...args) => console.log("665", args),
-		},
-	},
-	{
-		type: "IF",
-		logic: [
-			AND,
-			[ AND, true, [ NOT, false ] ],
-			false,
-		],
-		route: {
-			true: (...args) => console.log("TtTtrue", args),
-			false: (...args) => console.log("FfFfalse", args),
-		},
-	},
-	{
-		type: "WHILE",
-		logic: [
-			AND,
-			true,
-			() => Math.random() < 0.5,
-		],
-		route: () => console.log("WHILE action executed"),
-	},
-], {}, {
-	logTrue: () => console.log("Condition evaluated to true"),
-	logFalse: () => console.log("Condition evaluated to false"),
-})
-	.then((results) => console.log("Rule engine execution completed", results))
-	.catch(error => console.error("Rule engine error:", error));
+// ruleEngine([
+// 	/* Shorthand to support (direct Propositions for) cases where the final result of `ruleEngine` is used for further processing, instead of individual routing */
+// 	[
+// 		OR,
+// 		[ AND, true, true ],
+// 		false,
+// 	],
+// 	/* Normal syntax */
+// 	{
+// 		// type: EnumRuleType.PROPOSITION,	// This is optional, but useful for debugging
+// 		// name: "Test Rule 1",	// This is optional, but useful for debugging
+// 		logic: [
+// 			OR,
+// 			[ AND, true, [ NOT, false ] ],
+// 			false,
+// 		],
+// 		route: {
+// 			true: (...args) => console.log("123", args),
+// 			false: (...args) => console.log("321", args),
+// 		},
+// 	},
+// 	{
+// 		logic: [
+// 			() => Math.random() < 0.5,
+// 		],
+// 		route: {
+// 			true: (...args) => console.log("556", args),
+// 			false: (...args) => console.log("665", args),
+// 		},
+// 	},
+// 	{
+// 		type: "IF",
+// 		logic: [
+// 			AND,
+// 			[ AND, true, [ NOT, false ] ],
+// 			false,
+// 		],
+// 		route: {
+// 			true: (...args) => console.log("TtTtrue", args),
+// 			false: (...args) => console.log("FfFfalse", args),
+// 		},
+// 	},
+// 	{
+// 		type: "WHILE",
+// 		logic: [
+// 			AND,
+// 			true,
+// 			() => Math.random() < 0.5,
+// 		],
+// 		route: () => console.log("WHILE action executed"),
+// 	},
+// ], {}, {
+// 	logTrue: () => console.log("Condition evaluated to true"),
+// 	logFalse: () => console.log("Condition evaluated to false"),
+// })
+// 	.then((results) => console.log("Rule engine execution completed", results))
+// 	.catch(error => console.error("Rule engine error:", error));

@@ -109,11 +109,9 @@ export const Proposition = {
 export default Proposition;
 
 
-/**
- * ============================================
- * 		Example usage
- * ============================================
- */
+// ============================================
+// 			Example Usage
+// ============================================
 // // Syntactical variant that uses function syntax
 // const logicCircuit = AND(
 // 	AND(true, NOT(false)),
