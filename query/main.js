@@ -1,7 +1,7 @@
 import express from "express";
 import "./dotenv.js";
 
-import RulesRouter from "./router/Rules.js";
+import QueryRouter from "./router/Query.js";
 
 const app = express();
 const port = process.env.PORT;
@@ -13,7 +13,7 @@ app.use((req, res, next) => {
 	next();
 });
 
-app.use("/rules", RulesRouter);
+app.use("/query", QueryRouter);
 
 app.use("*", (req, res) => {
 	res.status(404).send("404 Not Found");

@@ -41,16 +41,23 @@ export const IF = (context, a, b) => async () => await OR(context, NOT(context, 
 
 export const IFF = (context, a, b) => async () => await NOT(context, XOR(context, a, b))();
 
-// Adjust evaluate to support context
 export const evaluate = async (circuit, context = {}) => {
 	if(typeof circuit === "function") {
-		return await circuit(context); // Pass context to functions
+		return await circuit(context);
 	} else if(Array.isArray(circuit)) {
 		const operator = circuit[ 0 ];
 		const operands = circuit.slice(1);
+		/* Recurse the circuit and evaluate all operands */
 		const evaluatedOperands = await Promise.all(operands.map(async operand => await evaluate(operand, context)));
-		if(typeof operator === "function") {
-			return evaluate(await operator(context, ...evaluatedOperands), context); // Pass context to functions
+
+		if(typeof operator === "string") {
+			const operatorFunc = Proposition[ operator ];
+
+			if(typeof operatorFunc === "function") {
+				return evaluate(await operatorFunc(context, ...evaluatedOperands), context);
+			}
+		} else if(typeof operator === "function") {
+			return evaluate(await operator(context, ...evaluatedOperands), context);
 		} else {
 			throw new Error("Invalid operator in logic circuit.");
 		}
