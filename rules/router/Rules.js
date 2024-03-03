@@ -1,34 +1,9 @@
 import express from "express";
-import fs from "fs/promises";
-import { fileURLToPath } from "url";
-import path from "path";
-
-import Proposition from "../lib/Proposition.js";
+import { loadRuleJson, loadPropositionJson } from "./Rules.utility.js";
 import Rule from "../lib/Rule.js";
+import Proposition from "../lib/Proposition.js";
 
 const router = express.Router();
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-async function loadRuleJson(uuid) {
-	const rulePath = path.join(__dirname, `../data/rules/${ uuid }.rule`);
-	try {
-		const fileContents = await fs.readFile(rulePath, "utf-8");
-		return JSON.parse(fileContents);
-	} catch(error) {
-		console.error(error);
-		return null;
-	}
-};
-async function loadPropositionJson(uuid) {
-	const propositionPath = path.join(__dirname, `../data/props/${ uuid }.prop`);
-	try {
-		const fileContents = await fs.readFile(propositionPath, "utf-8");
-		return JSON.parse(fileContents);
-	} catch(error) {
-		console.error(error);
-		return null;
-	}
-};
 
 router.use("/rule/:uuid", async (req, res) => {
 	const { uuid } = req.params;
@@ -45,6 +20,7 @@ router.use("/rule/:uuid", async (req, res) => {
 		res.status(404).send("Rule not found");
 	}
 });
+
 router.use("/prop/:uuid", async (req, res) => {
 	const { uuid } = req.params;
 	const propositionJson = await loadPropositionJson(uuid);
@@ -58,7 +34,7 @@ router.use("/prop/:uuid", async (req, res) => {
 		if(Array.isArray(propositionJson.logic)) {
 			try {
 				const result = await Proposition.evaluate(Proposition.fromJson(propositionJson.logic), context);
-				res.json({ uuid, result });
+				res.status(200).json({ uuid, result });
 			} catch(error) {
 				res.status(500).json({ error: error.message });
 			}
@@ -68,6 +44,6 @@ router.use("/prop/:uuid", async (req, res) => {
 	} else {
 		res.status(404).send("Proposition not found");
 	}
-})
+});
 
 export default router;
