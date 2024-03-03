@@ -2,8 +2,7 @@ import Proposition, { AND, NOT, OR } from "./Proposition.js";
 
 export const EnumRuleType = {
 	IF: "IF",
-	SWITCH: "SWITCH",
-	LOOP: "LOOP",
+	WHILE: "WHILE",
 };
 
 const executeRoute = async (route, { context, router } = {}) => {
@@ -22,15 +21,7 @@ export const ruleHandlers = {
 		await executeRoute(route[ result ? "true" : "false" ], options);
 		return result;
 	},
-	[ EnumRuleType.SWITCH ]: async (logic, routes, options) => {
-		const switchResult = await Proposition.evaluate(logic, options.context, options.router);
-		const matchedRoute = routes.find(([ condition, _ ]) => condition === switchResult || (typeof condition === "function" && condition(options.context, options.router)));
-		if(matchedRoute) {
-			await executeRoute(matchedRoute[ 1 ], options);
-		}
-		return switchResult;
-	},
-	[ EnumRuleType.LOOP ]: async (logic, route, options) => {
+	[ EnumRuleType.WHILE ]: async (logic, route, options) => {
 		const results = [];
 		while(await Proposition.evaluate(logic, options.context, options.router)) {
 			const iterationResult = await executeRoute(route, options) ?? true;
@@ -40,22 +31,49 @@ export const ruleHandlers = {
 	},
 };
 
+/**
+ * If *any* Rule contains a name, the result will be an object with the name as the key and the result as the value.
+ * Otherwise, the result will be an array of results in the same order as the rules.
+ */
 export const ruleEngine = async (ruleSet, context = {}, router = {}) => {
-	const results = [];
-	for(let rule of ruleSet) {
+	let useObjectForResult = ruleSet.some(rule => typeof rule === "object" && rule.name);
+	let results = useObjectForResult ? {} : [];
+
+	for(let i = 0; i < ruleSet.length; i++) {
+		let rule = ruleSet[ i ];
+		let resultKey = (typeof rule === "object" && rule.name) ? rule.name : i.toString();
+
 		if(Array.isArray(rule)) {
 			const logic = rule;
 			const route = { true: () => true, false: () => false };
 			const result = await ruleHandlers[ EnumRuleType.IF ](logic, route, { context, router });
-			results.push(result);
+
+			if(useObjectForResult) {
+				results[ resultKey ] = result;
+			} else {
+				results.push(result);
+			}
 		} else {
 			const result = await executeRule(rule, { context, router });
-			results.push(result);
+
+			if(useObjectForResult) {
+				results[ resultKey ] = result;
+			} else {
+				results.push(result);
+			}
 		}
 	}
+
 	return results;
 };
 
+/**
+ * Rule Syntax:
+ * - type: EnumRuleType
+ * - logic: Proposition
+ * - route: Function | String
+ * - ?name: String
+ */
 export const executeRule = async (rule, options) => {
 	const { type, logic, route } = rule;
 	if(!ruleHandlers[ type ]) {
@@ -85,6 +103,7 @@ ruleEngine([
 	],
 	/* Normal syntax */
 	{
+		// name: "Test Rule 1",	// This is optional, but useful for debugging
 		type: "IF",
 		logic: [
 			AND,
@@ -97,27 +116,13 @@ ruleEngine([
 		},
 	},
 	{
-		type: "SWITCH",
-		logic: [
-			AND,
-			true,
-			[ NOT, false ],
-		],
-		route: [
-			[ true, "logTrue" ],
-			[ false, "logFalse" ],
-			[ async (...args) => { /* something conditional */ }, "logTrue" ],
-			() => console.log("Executing default action"),
-		]
-	},
-	{
-		type: "LOOP",
+		type: "WHILE",
 		logic: [
 			AND,
 			true,
 			() => Math.random() < 0.5,
 		],
-		route: () => console.log("Loop action executed"),
+		route: () => console.log("WHILE action executed"),
 	}
 
 ], {}, {
