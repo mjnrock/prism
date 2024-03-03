@@ -43,15 +43,12 @@ export const ruleHandlers = {
 export const ruleEngine = async (ruleSet, context = {}, router = {}) => {
 	const results = [];
 	for(let rule of ruleSet) {
-		// Check if the rule is directly an array (shorthand syntax for logic)
 		if(Array.isArray(rule)) {
-			// Execute the rule using the IF type handler with a default truthy route
 			const logic = rule;
-			const route = { true: () => true, false: () => false }; // Default routes
+			const route = { true: () => true, false: () => false };
 			const result = await ruleHandlers[ EnumRuleType.IF ](logic, route, { context, router });
 			results.push(result);
 		} else {
-			// Process as a regular rule object
 			const result = await executeRule(rule, { context, router });
 			results.push(result);
 		}
