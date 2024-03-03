@@ -15,12 +15,12 @@
         false
     ],
     "route": {
-        "true": "(...args) => console.log(\"123\", args)",
-        "false": "(...args) => console.log(\"321\", args)"
+        "true": "(...args) => console.log(\"[ROUTE]:123\", args)",
+        "false": "(...args) => console.log(\"[ROUTE]:321\", args)"
     },
 	"context": {},
 	"router": {
-		"truf": "() => console.log('Test Prop True')",
-		"falf": "() => console.log('Test Prop False')"
+		"truf": "() => console.log('[ROUTER]:Test Prop True')",
+		"falf": "() => console.log('[ROUTER]:Test Prop False')"
 	}
 }
