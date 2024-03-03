@@ -3,6 +3,7 @@ import Proposition, { AND, NOT, OR } from "./Proposition.js";
 export const EnumRuleType = {
 	IF: "IF",
 	WHILE: "WHILE",
+	PROPOSITION: "PROPOSITION",
 };
 
 const executeRoute = async (route, { context, router } = {}) => {
@@ -29,12 +30,13 @@ export const ruleHandlers = {
 		}
 		return results;
 	},
+	[ EnumRuleType.PROPOSITION ]: async (logic, route, options) => {
+		const result = await Proposition.evaluate(logic, options.context, options.router);
+		await executeRoute(route[ result ? "true" : "false" ], options);
+		return result;
+	},
 };
 
-/**
- * If *any* Rule contains a name, the result will be an object with the name as the key and the result as the value.
- * Otherwise, the result will be an array of results in the same order as the rules.
- */
 export const ruleEngine = async (ruleSet, context = {}, router = {}) => {
 	let useObjectForResult = ruleSet.some(rule => typeof rule === "object" && rule.name);
 	let results = useObjectForResult ? {} : [];
@@ -46,7 +48,7 @@ export const ruleEngine = async (ruleSet, context = {}, router = {}) => {
 		if(Array.isArray(rule)) {
 			const logic = rule;
 			const route = { true: () => true, false: () => false };
-			const result = await ruleHandlers[ EnumRuleType.IF ](logic, route, { context, router });
+			const result = await ruleHandlers[ EnumRuleType.PROPOSITION ](logic, route, { context, router });
 
 			if(useObjectForResult) {
 				results[ resultKey ] = result;
@@ -67,15 +69,17 @@ export const ruleEngine = async (ruleSet, context = {}, router = {}) => {
 	return results;
 };
 
+
 /**
  * Rule Syntax:
- * - type: EnumRuleType
+ * - ?name: String
+ * - ?type: EnumRuleType (df = PROPOSITION)
  * - logic: Proposition
  * - route: Function | String
- * - ?name: String
  */
+
 export const executeRule = async (rule, options) => {
-	const { type, logic, route } = rule;
+	const { type = EnumRuleType.PROPOSITION, logic, route } = rule;
 	if(!ruleHandlers[ type ]) {
 		throw new Error("Invalid rule type.");
 	}
@@ -91,11 +95,12 @@ export const Rule = {
 export default Rule;
 
 
+
 // ============================================
 // 			Example Usage
 // ============================================
 ruleEngine([
-	/* This first shorthand is for such cases where the results of ruleEngine(...) are used for their side effects (basically, direct support for Propositions) */
+	/* Shorthand to support (direct Propositions for) cases where the final result of `ruleEngine` is used for further processing, instead of individual routing */
 	[
 		OR,
 		[ AND, true, true ],
@@ -103,7 +108,28 @@ ruleEngine([
 	],
 	/* Normal syntax */
 	{
+		// type: EnumRuleType.PROPOSITION,	// This is optional, but useful for debugging
 		// name: "Test Rule 1",	// This is optional, but useful for debugging
+		logic: [
+			OR,
+			[ AND, true, [ NOT, false ] ],
+			false,
+		],
+		route: {
+			true: (...args) => console.log("123", args),
+			false: (...args) => console.log("321", args),
+		},
+	},
+	{
+		logic: [
+			() => Math.random() < 0.5,
+		],
+		route: {
+			true: (...args) => console.log("556", args),
+			false: (...args) => console.log("665", args),
+		},
+	},
+	{
 		type: "IF",
 		logic: [
 			AND,
@@ -123,8 +149,7 @@ ruleEngine([
 			() => Math.random() < 0.5,
 		],
 		route: () => console.log("WHILE action executed"),
-	}
-
+	},
 ], {}, {
 	logTrue: () => console.log("Condition evaluated to true"),
 	logFalse: () => console.log("Condition evaluated to false"),
