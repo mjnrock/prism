@@ -15,6 +15,6 @@
 	"lookup": {
 		"teF": "() => false",
 		"teT": "() => true",
-		"rand": "() => Math.random() > 0.5"
+		"rand": "(ctx) => { console.log(`RANDOM`, ctx); return Math.random() > 0.5; }"
 	}
 }

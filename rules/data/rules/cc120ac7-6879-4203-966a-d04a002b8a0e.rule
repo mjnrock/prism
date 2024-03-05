@@ -4,10 +4,12 @@
     "name": "Test Rule 1",
     "logic": "cc120ac7-6879-4203-966a-d04a002b8a0f",
     "route": {
-        "true": "(...args) => console.log(\"[ROUTE]:123\", args)",
+        "true": "(ctx) => console.log(\"[ROUTE]:123\", ctx)",
         "false": "falf"
     },
-	"context": {},
+	"context": {
+		"fish": 1
+	},
 	"lookup": {
 		"truf": "() => console.log('[ROUTER]:Test Prop True')",
 		"falf": "() => console.log('[ROUTER]:Test Prop False')",

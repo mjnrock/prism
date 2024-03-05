@@ -45,9 +45,9 @@ export const IFF = (context, a, b) => async () => await NOT(context, XOR(context
  * Similarly to Rules, allow for custom functions to be injected into the logic,
  * by providing the lookup as a lookup.
  */
-const preprocessLogicWithRouter = (logic, lookup) => {
+const preprocessLogicWithLookup = (logic, lookup) => {
 	if(Array.isArray(logic)) {
-		return logic.map(subLogic => preprocessLogicWithRouter(subLogic, lookup));
+		return logic.map(subLogic => preprocessLogicWithLookup(subLogic, lookup));
 	} else if(typeof logic === "string" && lookup.hasOwnProperty(logic)) {
 		return lookup[ logic ];
 	}
@@ -56,7 +56,7 @@ const preprocessLogicWithRouter = (logic, lookup) => {
 
 export const evaluate = async (circuit, context = {}, lookup = {}) => {
 	if(Object.keys(lookup).length > 0) {
-		circuit = preprocessLogicWithRouter(circuit, lookup);
+		circuit = preprocessLogicWithLookup(circuit, lookup);
 	}
 
 	if(typeof circuit === "function") {
@@ -70,16 +70,16 @@ export const evaluate = async (circuit, context = {}, lookup = {}) => {
 		}
 
 		/* Recurse the circuit and evaluate all operands */
-		const evaluatedOperands = await Promise.all(operands.map(async operand => await evaluate(operand, context)));
+		const evaluatedOperands = await Promise.all(operands.map(async operand => await evaluate(operand, context, lookup)));
 
 		if(typeof operator === "string") {
 			const operatorFunc = Proposition[ operator ];
 
 			if(typeof operatorFunc === "function") {
-				return evaluate(await operatorFunc(context, ...evaluatedOperands), context);
+				return evaluate(await operatorFunc(context, ...evaluatedOperands), context, lookup);
 			}
 		} else if(typeof operator === "function") {
-			return evaluate(await operator(context, ...evaluatedOperands), context);
+			return evaluate(await operator(context, ...evaluatedOperands), context, lookup);
 		} else {
 			throw new Error("Invalid operator in logic circuit.");
 		}

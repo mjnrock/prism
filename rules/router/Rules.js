@@ -5,6 +5,17 @@ import Proposition from "../lib/Proposition.js";
 
 const router = express.Router();
 
+router.use((req, res, next) => {
+	// console log the endpoint, params, and body
+	console.log("-=| Request received |=-");
+	console.log(`Method: ${ req.method }`);
+	console.log(`Endpoint: ${ req.originalUrl }`);
+	console.log(`Params: ${ JSON.stringify(req.params) }`);
+	console.log(`Body: ${ JSON.stringify(req.body) }`);
+	console.log("-======================-");
+	next();
+});
+
 router.use("/rule/:uuid", async (req, res) => {
 	const { uuid } = req.params;
 	const ruleJson = await loadRuleJson(uuid);
@@ -16,10 +27,6 @@ router.use("/rule/:uuid", async (req, res) => {
 			return acc;
 		}, {});
 	}
-
-	console.log(uuid)
-	console.log(ruleJson)
-	console.log(lookupFunctions)
 
 	if(ruleJson) {
 		const rule = Rule.fromJson(ruleJson);
@@ -36,9 +43,6 @@ router.use("/rule/:uuid", async (req, res) => {
 router.use("/prop/:uuid", async (req, res) => {
 	const { uuid } = req.params;
 	const propositionJson = await loadPropositionJson(uuid);
-
-	console.log(uuid)
-	console.log(propositionJson)
 
 	if(propositionJson) {
 		const context = req.body;
