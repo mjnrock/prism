@@ -13,6 +13,13 @@ app.use((req, res, next) => {
 	next();
 });
 
+/*
+* Example Usage:
+* http://localhost:3201/rules/rule/cc120ac7-6879-4203-966a-d04a002b8a0e?info=all
+* http://localhost:3201/rules/rule/cc120ac7-6879-4203-966a-d04a002b8a0e?info=context
+* http://localhost:3201/rules/rule/cc120ac7-6879-4203-966a-d04a002b8a0e?info=audit
+* http://localhost:3201/rules/prop/cc120ac7-6879-4203-966a-d04a002b8a0f
+*/
 app.use("/rules", RulesRouter);
 
 app.use("*", (req, res) => {
