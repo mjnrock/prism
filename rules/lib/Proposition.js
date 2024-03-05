@@ -41,6 +41,10 @@ export const IF = (context, a, b) => async () => await OR(context, NOT(context, 
 
 export const IFF = (context, a, b) => async () => await NOT(context, XOR(context, a, b))();
 
+/**
+ * Similarly to Rules, allow for custom functions to be injected into the logic,
+ * by providing the router as a lookup.
+ */
 const preprocessLogicWithRouter = (logic, router) => {
 	if(Array.isArray(logic)) {
 		return logic.map(subLogic => preprocessLogicWithRouter(subLogic, router));
@@ -51,7 +55,6 @@ const preprocessLogicWithRouter = (logic, router) => {
 }
 
 export const evaluate = async (circuit, context = {}, router = {}) => {
-	// Preprocess logic if router is provided
 	if(Object.keys(router).length > 0) {
 		circuit = preprocessLogicWithRouter(circuit, router);
 	}
@@ -65,7 +68,6 @@ export const evaluate = async (circuit, context = {}, router = {}) => {
 		if(typeof operator === "string") {
 			operator = Proposition[ operator ];
 		}
-
 
 		/* Recurse the circuit and evaluate all operands */
 		const evaluatedOperands = await Promise.all(operands.map(async operand => await evaluate(operand, context)));
