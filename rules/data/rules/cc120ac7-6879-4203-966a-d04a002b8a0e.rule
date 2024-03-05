@@ -2,25 +2,16 @@
 	"id": "cc120ac7-6879-4203-966a-d04a002b8a0e",
     "type": "PROPOSITION",
     "name": "Test Rule 1",
-    "logic": [
-        "OR",
-        [
-            "AND",        
-            true,
-            [
-                "NOT",    
-                false     
-            ]
-        ],
-        false
-    ],
+    "logic": "cc120ac7-6879-4203-966a-d04a002b8a0f",
     "route": {
         "true": "(...args) => console.log(\"[ROUTE]:123\", args)",
-        "false": "(...args) => console.log(\"[ROUTE]:321\", args)"
+        "false": "falf"
     },
 	"context": {},
 	"router": {
 		"truf": "() => console.log('[ROUTER]:Test Prop True')",
-		"falf": "() => console.log('[ROUTER]:Test Prop False')"
+		"falf": "() => console.log('[ROUTER]:Test Prop False')",
+		"teF": "() => false",
+		"teT": "() => true"
 	}
 }

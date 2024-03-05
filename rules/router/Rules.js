@@ -9,6 +9,9 @@ router.use("/rule/:uuid", async (req, res) => {
 	const { uuid } = req.params;
 	const ruleJson = await loadRuleJson(uuid);
 
+	console.log(uuid)
+	console.log(ruleJson)
+
 	if(ruleJson) {
 		const rule = Rule.fromJson(ruleJson);
 		const context = req.body;
@@ -25,15 +28,22 @@ router.use("/prop/:uuid", async (req, res) => {
 	const { uuid } = req.params;
 	const propositionJson = await loadPropositionJson(uuid);
 
-	console.log(uuid)
-	console.log(propositionJson)
-
 	if(propositionJson) {
 		const context = req.body;
+		let routerFunctions = {};
+
+		// Check if router is provided and parse stringified functions
+		if(propositionJson.router) {
+			routerFunctions = Object.entries(propositionJson.router).reduce((acc, [ key, value ]) => {
+				acc[ key ] = new Function(`return ${ value }`)();
+				return acc;
+			}, {});
+		}
 
 		if(Array.isArray(propositionJson.logic)) {
 			try {
-				const result = await Proposition.evaluate(Proposition.fromJson(propositionJson.logic), context);
+				// Pass the router functions along with the logic and context
+				const result = await Proposition.evaluate(propositionJson.logic, context, routerFunctions);
 				res.status(200).json({ uuid, result });
 			} catch(error) {
 				res.status(500).json({ error: error.message });
@@ -45,5 +55,6 @@ router.use("/prop/:uuid", async (req, res) => {
 		res.status(404).send("Proposition not found");
 	}
 });
+
 
 export default router;

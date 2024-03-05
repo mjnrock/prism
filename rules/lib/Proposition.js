@@ -41,7 +41,21 @@ export const IF = (context, a, b) => async () => await OR(context, NOT(context, 
 
 export const IFF = (context, a, b) => async () => await NOT(context, XOR(context, a, b))();
 
-export const evaluate = async (circuit, context = {}) => {
+const preprocessLogicWithRouter = (logic, router) => {
+	if(Array.isArray(logic)) {
+		return logic.map(subLogic => preprocessLogicWithRouter(subLogic, router));
+	} else if(typeof logic === "string" && router.hasOwnProperty(logic)) {
+		return router[ logic ];
+	}
+	return logic;
+}
+
+export const evaluate = async (circuit, context = {}, router = {}) => {
+	// Preprocess logic if router is provided
+	if(Object.keys(router).length > 0) {
+		circuit = preprocessLogicWithRouter(circuit, router);
+	}
+
 	if(typeof circuit === "function") {
 		return await circuit(context);
 	} else if(Array.isArray(circuit)) {

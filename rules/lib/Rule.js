@@ -6,6 +6,20 @@ export const EnumRuleType = {
 	PROPOSITION: "PROPOSITION",
 };
 
+/**
+ * This is used for cases where a Proposition expects a custom function
+ * to be present in the router, as a lookup.  This will inject that custom
+ * function into the Proposition logic.
+ */
+const preprocessLogic = (logic, router) => {
+	if(Array.isArray(logic)) {
+		return logic.map(item => preprocessLogic(item, router));
+	} else if(typeof logic === "string" && router[ logic ]) {
+		return router[ logic ];
+	}
+	return logic;
+};
+
 const executeRoute = async (route, { context, router } = {}) => {
 	/* Account for stringified functions */
 	if(typeof route === "string") {
@@ -129,14 +143,18 @@ export const fromJson = (json) => {
  * - logic: Proposition
  * - route: Function | String
  */
-
 export const executeRule = async (rule, options) => {
 	const { type = EnumRuleType.PROPOSITION, logic, route } = rule;
+
+	const processedLogic = preprocessLogic(logic, options.router);
+
 	if(!ruleHandlers[ type ]) {
 		throw new Error("Invalid rule type.");
 	}
-	return await ruleHandlers[ type ](logic, route, options);
+
+	return await ruleHandlers[ type ](processedLogic, route, options);
 };
+
 
 export const Rule = {
 	EnumRuleType,

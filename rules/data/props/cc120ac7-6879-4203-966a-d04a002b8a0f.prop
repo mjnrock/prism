@@ -1,15 +1,19 @@
 {
 	"id": "cc120ac7-6879-4203-966a-d04a002b8a0f",
     "logic": [
-        "AND",
+        "OR",
         [
             "AND",        
-            true,
+            "teT",
             [
                 "NOT",    
                 false     
             ]
         ],
-        false
-    ]
+        "teF"
+    ],
+	"router": {
+		"teF": "() => false",
+		"teT": "() => true"
+	}
 }
