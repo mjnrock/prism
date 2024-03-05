@@ -83,12 +83,12 @@ router.use("/rule/:uuid", async (req, res) => {
 					if(info === "all" || info === "full" || info == 3) {
 						obj = {
 							...obj,
-							audit: results.audit,
+							results: results.results,
 							context: results.context,
 						};
-					} else if(info === "audit" || info == 1) {
-						obj.audit = results.audit;
-					} else if(info === "context" || info == 2) {
+					} else if(info === "audit" || info === "results" || info === "detail" || info == 1) {
+						obj.results = results.results;
+					} else if(info === "context" || info === "state" || info == 2) {
 						obj.context = results.context;
 					}
 

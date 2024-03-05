@@ -100,7 +100,7 @@ export const ruleEngine = async (ruleSet, { context = {}, lookup = {} } = {}) =>
 	let lastResult = Array.isArray(results) ? results[ results.length - 1 ] : Object.values(results).pop();
 
 	return {
-		audit: results,
+		results: results,
 		result: lastResult,
 		context,
 	};
