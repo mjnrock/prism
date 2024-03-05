@@ -1,7 +1,7 @@
 {
 	"type": "module",
-	"name": "logic",
-	"version": "1.0.0",
+	"name": "rules",
+	"version": "0.1.0",
 	"main": "index.js",
 	"license": "MIT",
 	"dependencies": {
