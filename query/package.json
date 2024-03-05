@@ -10,6 +10,7 @@
 	},
 	"scripts": {
 		"start": "node main.js",
+		"dev": "nodemon --exec node --experimental-modules main.js",
 		"test": "jest",
 		"test:watch": "jest --watch --detectOpenHandles"
 	},
@@ -18,6 +19,7 @@
 		"@babel/preset-env": "^7.24.0",
 		"babel-jest": "^29.7.0",
 		"jest": "^29.7.0",
+		"nodemon": "^3.1.0",
 		"supertest": "^6.3.4"
 	}
 }
