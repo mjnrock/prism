@@ -1,5 +1,7 @@
 import express from "express";
+
 import { loadRuleJson, loadPropositionJson } from "./Rules.utility.js";
+
 import Rule from "../lib/Rule.js";
 import Proposition from "../lib/Proposition.js";
 
