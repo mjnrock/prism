@@ -97,7 +97,13 @@ export const ruleEngine = async (ruleSet, { context = {}, lookup = {} } = {}) =>
 		}
 	}
 
-	return results;
+	let lastResult = Array.isArray(results) ? results[ results.length - 1 ] : Object.values(results).pop();
+
+	return {
+		audit: results,
+		result: lastResult,
+		context,
+	};
 };
 
 export const toJson = (rule, spacing = 0) => {
