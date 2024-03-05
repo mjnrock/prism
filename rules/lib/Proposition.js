@@ -43,20 +43,20 @@ export const IFF = (context, a, b) => async () => await NOT(context, XOR(context
 
 /**
  * Similarly to Rules, allow for custom functions to be injected into the logic,
- * by providing the router as a lookup.
+ * by providing the lookup as a lookup.
  */
-const preprocessLogicWithRouter = (logic, router) => {
+const preprocessLogicWithRouter = (logic, lookup) => {
 	if(Array.isArray(logic)) {
-		return logic.map(subLogic => preprocessLogicWithRouter(subLogic, router));
-	} else if(typeof logic === "string" && router.hasOwnProperty(logic)) {
-		return router[ logic ];
+		return logic.map(subLogic => preprocessLogicWithRouter(subLogic, lookup));
+	} else if(typeof logic === "string" && lookup.hasOwnProperty(logic)) {
+		return lookup[ logic ];
 	}
 	return logic;
 }
 
-export const evaluate = async (circuit, context = {}, router = {}) => {
-	if(Object.keys(router).length > 0) {
-		circuit = preprocessLogicWithRouter(circuit, router);
+export const evaluate = async (circuit, context = {}, lookup = {}) => {
+	if(Object.keys(lookup).length > 0) {
+		circuit = preprocessLogicWithRouter(circuit, lookup);
 	}
 
 	if(typeof circuit === "function") {

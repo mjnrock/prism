@@ -8,16 +8,25 @@ const router = express.Router();
 router.use("/rule/:uuid", async (req, res) => {
 	const { uuid } = req.params;
 	const ruleJson = await loadRuleJson(uuid);
+	let lookupFunctions = {};
+
+	if(ruleJson.lookup) {
+		lookupFunctions = Object.entries(ruleJson.lookup).reduce((acc, [ key, value ]) => {
+			acc[ key ] = new Function(`return ${ value }`)();
+			return acc;
+		}, {});
+	}
 
 	console.log(uuid)
 	console.log(ruleJson)
+	console.log(lookupFunctions)
 
 	if(ruleJson) {
 		const rule = Rule.fromJson(ruleJson);
 		const context = req.body;
 
-		Rule.ruleEngine([ rule ], { context })
-			.then(results => res.status(200).json({ uuid, results }))
+		Rule.ruleEngine([ rule ], { context, lookup: lookupFunctions })
+			.then(results => res.status(200).json({ id: uuid, results }))
 			.catch(error => res.status(500).json({ error: error.message }));
 	} else {
 		res.status(404).send("Rule not found");
@@ -33,10 +42,10 @@ router.use("/prop/:uuid", async (req, res) => {
 
 	if(propositionJson) {
 		const context = req.body;
-		let routerFunctions = {};
+		let lookupFunctions = {};
 
-		if(propositionJson.router) {
-			routerFunctions = Object.entries(propositionJson.router).reduce((acc, [ key, value ]) => {
+		if(propositionJson.lookup) {
+			lookupFunctions = Object.entries(propositionJson.lookup).reduce((acc, [ key, value ]) => {
 				acc[ key ] = new Function(`return ${ value }`)();
 				return acc;
 			}, {});
@@ -44,8 +53,8 @@ router.use("/prop/:uuid", async (req, res) => {
 
 		if(Array.isArray(propositionJson.logic)) {
 			try {
-				const result = await Proposition.evaluate(propositionJson.logic, context, routerFunctions);
-				res.status(200).json({ uuid, result });
+				const result = await Proposition.evaluate(propositionJson.logic, context, lookupFunctions);
+				res.status(200).json({ id: uuid, result });
 			} catch(error) {
 				res.status(500).json({ error: error.message });
 			}

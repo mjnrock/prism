@@ -8,7 +8,7 @@
         "false": "falf"
     },
 	"context": {},
-	"router": {
+	"lookup": {
 		"truf": "() => console.log('[ROUTER]:Test Prop True')",
 		"falf": "() => console.log('[ROUTER]:Test Prop False')",
 		"teF": "() => false",

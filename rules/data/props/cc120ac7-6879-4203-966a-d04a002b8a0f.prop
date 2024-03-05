@@ -7,13 +7,14 @@
             "teT",
             [
                 "NOT",    
-                false     
+                "rand"
             ]
         ],
         "teF"
     ],
-	"router": {
+	"lookup": {
 		"teF": "() => false",
-		"teT": "() => true"
+		"teT": "() => true",
+		"rand": "() => Math.random() > 0.5"
 	}
 }

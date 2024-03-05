@@ -8,19 +8,19 @@ export const EnumRuleType = {
 
 /**
  * This is used for cases where a Proposition expects a custom function
- * to be present in the router, as a lookup.  This will inject that custom
+ * to be present in the lookup, as a lookup.  This will inject that custom
  * function into the Proposition logic.
  */
-const preprocessLogic = (logic, router) => {
+const preprocessLogic = (logic, lookup) => {
 	if(Array.isArray(logic)) {
-		return logic.map(item => preprocessLogic(item, router));
-	} else if(typeof logic === "string" && router[ logic ]) {
-		return router[ logic ];
+		return logic.map(item => preprocessLogic(item, lookup));
+	} else if(typeof logic === "string" && lookup[ logic ]) {
+		return lookup[ logic ];
 	}
 	return logic;
 };
 
-const executeRoute = async (route, { context, router } = {}) => {
+const executeRoute = async (route, { context, lookup } = {}) => {
 	/* Account for stringified functions */
 	if(typeof route === "string") {
 		try {
@@ -30,45 +30,45 @@ const executeRoute = async (route, { context, router } = {}) => {
 
 	if(typeof route === "function") {
 		return await route(context);
-	} else if(typeof route === "string" && router && router[ route ]) {
-		return await router[ route ](context);
+	} else if(typeof route === "string" && lookup && lookup[ route ]) {
+		return await lookup[ route ](context);
 	} else {
-		throw new Error("Route must be a function or a valid route key within the provided router.");
+		throw new Error("Route must be a function or a valid route key within the provided lookup.");
 	}
 };
 
 export const ruleHandlers = {
 	[ EnumRuleType.IF ]: async (logic, route, options) => {
-		const result = await Proposition.evaluate(logic, options.context, options.router);
+		const result = await Proposition.evaluate(logic, options.context, options.lookup);
 		await executeRoute(route[ result ? "true" : "false" ], options);
 		return result;
 	},
 	[ EnumRuleType.WHILE ]: async (logic, route, options) => {
 		const results = [];
-		while(await Proposition.evaluate(logic, options.context, options.router)) {
+		while(await Proposition.evaluate(logic, options.context, options.lookup)) {
 			const iterationResult = await executeRoute(route, options) ?? true;
 			results.push(iterationResult);
 		}
 		return results;
 	},
 	[ EnumRuleType.PROPOSITION ]: async (logic, route, options) => {
-		const result = await Proposition.evaluate(logic, options.context, options.router);
+		const result = await Proposition.evaluate(logic, options.context, options.lookup);
 		await executeRoute(route[ result ? "true" : "false" ], options);
 		return result;
 	},
 };
 
-export const ruleEngine = async (ruleSet, { context = {}, router = {} } = {}) => {
+export const ruleEngine = async (ruleSet, { context = {}, lookup = {} } = {}) => {
 	let useObjectForResult = ruleSet.some(rule => typeof rule === "object" && rule.name);
 	let results = useObjectForResult ? {} : [];
 
-	/* Intermix rule-specific context and router from ruleSet */
+	/* Intermix rule-specific context and lookup from ruleSet */
 	for(const rule of ruleSet) {
 		if(rule?.context) {
 			context = { ...context, ...rule.context };
 		}
-		if(rule?.router) {
-			router = { ...router, ...rule.router };
+		if(rule?.lookup) {
+			lookup = { ...lookup, ...rule.lookup };
 		}
 	}
 
@@ -79,7 +79,7 @@ export const ruleEngine = async (ruleSet, { context = {}, router = {} } = {}) =>
 		if(Array.isArray(rule)) {
 			const logic = rule;
 			const route = { true: () => true, false: () => false };
-			const result = await ruleHandlers[ EnumRuleType.PROPOSITION ](logic, route, { context, router });
+			const result = await ruleHandlers[ EnumRuleType.PROPOSITION ](logic, route, { context, lookup });
 
 			if(useObjectForResult) {
 				results[ resultKey ] = result;
@@ -87,7 +87,7 @@ export const ruleEngine = async (ruleSet, { context = {}, router = {} } = {}) =>
 				results.push(result);
 			}
 		} else {
-			const result = await executeRule(rule, { context, router });
+			const result = await executeRule(rule, { context, lookup });
 
 			if(useObjectForResult) {
 				results[ resultKey ] = result;
@@ -146,7 +146,7 @@ export const fromJson = (json) => {
 export const executeRule = async (rule, options) => {
 	const { type = EnumRuleType.PROPOSITION, logic, route } = rule;
 
-	const processedLogic = preprocessLogic(logic, options.router);
+	const processedLogic = preprocessLogic(logic, options.lookup);
 
 	if(!ruleHandlers[ type ]) {
 		throw new Error("Invalid rule type.");
@@ -224,7 +224,7 @@ export default Rule;
 // 	},
 // ], {
 // 	context: {},
-// 	router: {
+// 	lookup: {
 // 		logTrue: () => console.log("Condition evaluated to true"),
 // 		logFalse: () => console.log("Condition evaluated to false"),
 // 	},
