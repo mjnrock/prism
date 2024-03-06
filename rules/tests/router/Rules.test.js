@@ -1,5 +1,5 @@
 import supertest from "supertest";
-import app, { server } from "../main.js";
+import app, { server } from "../../main.js";
 import fs from "fs";
 import path from "path";
 import { validate as uuidValidate } from "uuid";

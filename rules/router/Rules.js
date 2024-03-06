@@ -1,6 +1,5 @@
 import express from "express";
-
-import { loadRuleJson, loadPropositionJson } from "./Rules.utility.js";
+import { loadRuleJson, loadPropositionJson, createLookupFunctions, handleRouteError, sendJsonResponse } from "./Rules.utility.js";
 
 import Rule from "../lib/Rule.js";
 import Proposition from "../lib/Proposition.js";
@@ -8,7 +7,6 @@ import Proposition from "../lib/Proposition.js";
 const router = express.Router();
 
 router.use((req, res, next) => {
-	// console log the endpoint, params, and body
 	console.log("-=| Request received |=-");
 	console.log(`Method: ${ req.method }`);
 	console.log(`Endpoint: ${ req.originalUrl }`);
@@ -25,20 +23,12 @@ router.use("/prop/:uuid", async (req, res) => {
 
 		if(propositionJson) {
 			const context = req.body;
-			let lookupFunctions = {};
-
-			/* Create lookup functions from the proposition's lookup object */
-			if(propositionJson.lookup) {
-				lookupFunctions = Object.entries(propositionJson.lookup).reduce((acc, [ key, value ]) => {
-					acc[ key ] = new Function(`return ${ value }`)();
-					return acc;
-				}, {});
-			}
+			const lookupFunctions = createLookupFunctions(propositionJson.lookup);
 
 			if(Array.isArray(propositionJson.logic)) {
 				try {
 					const result = await Proposition.evaluate(propositionJson.logic, context, lookupFunctions);
-					res.status(200).json({ id: uuid, result });
+					sendJsonResponse(res, 200, uuid, result);
 				} catch(error) {
 					res.status(500).json({ error: error.message });
 				}
@@ -49,58 +39,28 @@ router.use("/prop/:uuid", async (req, res) => {
 			res.status(404).send("Proposition not found");
 		}
 	} catch(error) {
-		console.log(error);
-		res.status(500).send("Internal Server Error");
+		handleRouteError(res, error);
 	}
 });
 
 router.use("/rule/:uuid", async (req, res) => {
 	try {
 		const { uuid } = req.params;
-		const { info } = req.query;
 		const ruleJson = await loadRuleJson(uuid);
-		let lookupFunctions = {};
-
-		/* Create lookup functions from the rule's lookup object */
-		if(ruleJson.lookup) {
-			lookupFunctions = Object.entries(ruleJson.lookup).reduce((acc, [ key, value ]) => {
-				acc[ key ] = new Function(`return ${ value }`)();
-				return acc;
-			}, {});
-		}
 
 		if(ruleJson) {
-			const rule = Rule.fromJson(ruleJson);
 			const context = req.body;
+			const lookupFunctions = createLookupFunctions(ruleJson.lookup);
+			const rule = Rule.fromJson(ruleJson);
 
 			Rule.ruleEngine([ rule ], { context, lookup: lookupFunctions })
-				.then(results => {
-					let obj = {
-						id: uuid,
-						result: results.result,
-					};
-
-					if(info === "all" || info === "full" || info == 3) {
-						obj = {
-							...obj,
-							results: results.results,
-							context: results.context,
-						};
-					} else if(info === "audit" || info === "results" || info === "detail" || info == 1) {
-						obj.results = results.results;
-					} else if(info === "context" || info === "state" || info == 2) {
-						obj.context = results.context;
-					}
-
-					res.status(200).json(obj);
-				})
+				.then(results => sendJsonResponse(res, 200, uuid, results.result, req.query.info, results))
 				.catch(error => res.status(500).json({ error: error.message }));
 		} else {
 			res.status(404).send("Rule not found");
 		}
 	} catch(error) {
-		console.log(error);
-		res.status(500).send("Internal Server Error");
+		handleRouteError(res, error);
 	}
 });
 
