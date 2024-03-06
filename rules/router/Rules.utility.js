@@ -70,8 +70,10 @@ export const sendJsonResponse = (res, status, uuid, result, info = null, additio
 	res.status(status).json(response);
 };
 
-const determineAdditionalInfo = (info, results) => {
-	let obj = {};
+export const determineAdditionalInfo = (info, results) => {
+	let obj = {
+		result: results.result,
+	};
 	if([ "all", "full", "3" ].includes(info)) {
 		obj = {
 			results: results.results,

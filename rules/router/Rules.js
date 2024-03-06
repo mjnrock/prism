@@ -1,5 +1,5 @@
 import express from "express";
-import { loadRuleJson, loadPropositionJson, createLookupFunctions, handleRouteError, sendJsonResponse } from "./Rules.utility.js";
+import { loadRuleJson, loadPropositionJson, createLookupFunctions, handleRouteError, determineAdditionalInfo, sendJsonResponse as sendRuleResponse } from "./Rules.utility.js";
 
 import Rule from "../lib/Rule.js";
 import Proposition from "../lib/Proposition.js";
@@ -27,8 +27,14 @@ router.use("/prop/:uuid", async (req, res) => {
 
 			if(Array.isArray(propositionJson.logic)) {
 				try {
+					const ts = Date.now();
 					const result = await Proposition.evaluate(propositionJson.logic, context, lookupFunctions);
-					sendJsonResponse(res, 200, uuid, result);
+					res.status(200).json({
+						id: uuid,
+						result,
+						ts,
+						elapsed: Date.now() - ts,
+					});
 				} catch(error) {
 					res.status(500).json({ error: error.message });
 				}
@@ -46,6 +52,7 @@ router.use("/prop/:uuid", async (req, res) => {
 router.use("/rule/:uuid", async (req, res) => {
 	try {
 		const { uuid } = req.params;
+		const { info } = req.query;
 		const ruleJson = await loadRuleJson(uuid);
 
 		if(ruleJson) {
@@ -53,8 +60,14 @@ router.use("/rule/:uuid", async (req, res) => {
 			const lookupFunctions = createLookupFunctions(ruleJson.lookup);
 			const rule = Rule.fromJson(ruleJson);
 
+			const ts = Date.now();
 			Rule.ruleEngine([ rule ], { context, lookup: lookupFunctions })
-				.then(results => sendJsonResponse(res, 200, uuid, results.result, req.query.info, results))
+				.then(results => res.status(200).json({
+					id: uuid,
+					...determineAdditionalInfo(info, results),
+					ts,
+					elapsed: Date.now() - ts,
+				}))
 				.catch(error => res.status(500).json({ error: error.message }));
 		} else {
 			res.status(404).send("Rule not found");

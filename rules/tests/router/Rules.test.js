@@ -34,38 +34,42 @@ describe("Rule and Proposition Endpoints", () => {
 		server.close();
 	});
 
-	test("props/:uuid returns 200, a JSON payload, and verifies .id and .result", async () => {
-		if(propUUID) {
-			const response = await request.get(`/rules/prop/${ propUUID }`);
-			expect(response.statusCode).toBe(200);
-			expect(response.type).toBe("application/json");
+	describe("GET /rules/prop/:uuid", () => {
+		it("props/:uuid returns 200, a JSON payload, and verifies .id and .result", async () => {
+			if(propUUID) {
+				const response = await request.get(`/rules/prop/${ propUUID }`);
+				expect(response.statusCode).toBe(200);
+				expect(response.type).toBe("application/json");
 
-			/* Ensure existing and validation of uuid and result */
-			expect(response.body).toHaveProperty("id");
-			expect(uuidValidate(response.body.id)).toBe(true);
+				/* Ensure existing and validation of uuid and result */
+				expect(response.body).toHaveProperty("id");
+				expect(uuidValidate(response.body.id)).toBe(true);
 
-			expect(response.body).toHaveProperty("result");
-			expect(typeof response.body.result).toBe("boolean");
-		} else {
-			log("No proposition file found for testing");
-		}
+				expect(response.body).toHaveProperty("result");
+				expect(typeof response.body.result).toBe("boolean");
+			} else {
+				log("No proposition file found for testing");
+			}
+		});
 	});
 
-	test("rule/:uuid returns 200, a JSON payload, and verifies .id and .result", async () => {
-		if(ruleUUID) {
-			const response = await request.get(`/rules/rule/${ ruleUUID }`);
-			expect(response.statusCode).toBe(200);
-			expect(response.type).toBe("application/json");
+	describe("GET /rules/rule/:uuid", () => {
+		it("rule/:uuid returns 200, a JSON payload, and verifies .id and .result", async () => {
+			if(ruleUUID) {
+				const response = await request.get(`/rules/rule/${ ruleUUID }`);
+				expect(response.statusCode).toBe(200);
+				expect(response.type).toBe("application/json");
 
-			/* Ensure existing and validation of uuid and result */
-			expect(response.body).toHaveProperty("id");
-			expect(uuidValidate(response.body.id)).toBe(true);
+				/* Ensure existing and validation of uuid and result */
+				expect(response.body).toHaveProperty("id");
+				expect(uuidValidate(response.body.id)).toBe(true);
 
-			expect(response.body).toHaveProperty("result");
-			expect(typeof response.body.result).toBe("boolean");
-			expect(response.body.result).not.toBe(null);
-		} else {
-			log("No rule file found for testing");
-		}
+				expect(response.body).toHaveProperty("result");
+				expect(typeof response.body.result).toBe("boolean");
+				expect(response.body.result).not.toBe(null);
+			} else {
+				log("No rule file found for testing");
+			}
+		});
 	});
 });
